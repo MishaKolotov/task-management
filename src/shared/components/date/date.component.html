@@ -1,0 +1,8 @@
+<div class="date-container">
+  <div class="date-container__day">{{ currentDate | date: 'dd' }}</div>
+  <div class="date-container__month-year">
+    <div class="date-container__month">{{ currentDate | date: 'MMM' }}</div>
+    <div class="date-container__year">{{ currentDate | date: 'yyyy' }}</div>
+  </div>
+  <div class="date-container__weekday">{{ currentDate | date: 'EEEE' }}</div>
+</div>

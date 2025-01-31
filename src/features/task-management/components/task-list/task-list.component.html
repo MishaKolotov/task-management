@@ -1,0 +1,118 @@
+<section class="tasks-container">
+  <div class="tasks-block">
+    <app-date></app-date>
+
+    <app-progress-bar [items]="tasks" [segments]="taskProgressSegments">
+    </app-progress-bar>
+
+    <div class="tasks-field-section">
+      <mat-form-field appearance="fill" class="task-input">
+        <mat-label>Filter tasks</mat-label>
+        <input matInput [(ngModel)]="filterText" (input)="applyFilter()" />
+      </mat-form-field>
+    </div>
+
+    <div class="tasks-field-section">
+      <mat-form-field appearance="fill" class="task-input">
+        <mat-label>Add new item</mat-label>
+        <input matInput [(ngModel)]="newTaskTitle" />
+        <button matSuffix mat-icon-button color="primary" (click)="addTask()">
+          <mat-icon>add</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
+    <mat-accordion [togglePosition]="'before'">
+      <mat-expansion-panel #progressPanel [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title>In Progress</mat-panel-title>
+        </mat-expansion-panel-header>
+        <mat-list>
+          <ng-container
+            *ngTemplateOutlet="
+              taskList;
+              context: { tasks: progressTasks, status: TaskStatus.progress }
+            "
+          ></ng-container>
+        </mat-list>
+      </mat-expansion-panel>
+
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>Do Later</mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-container
+          *ngTemplateOutlet="
+            taskList;
+            context: { tasks: postponedTasks, status: TaskStatus.postponed }
+          "
+        ></ng-container>
+      </mat-expansion-panel>
+
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>Completed</mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-container
+          *ngTemplateOutlet="
+            taskList;
+            context: { tasks: completedTasks, status: TaskStatus.completed }
+          "
+        ></ng-container>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </div>
+</section>
+
+<ng-template #taskList let-tasks="tasks" let-status="status">
+  <mat-list>
+    @if(!tasks.length) {
+      <mat-list-item>
+        <div matListItemLine class="tasks-item">
+          No Items
+        </div>
+      </mat-list-item>
+    }
+
+    @for (task of tasks; track $index) {
+      <mat-list-item>
+        <div matListItemLine class="tasks-item">
+          <span>{{ task.title }} </span>
+
+          <div>
+            @if (status !== TaskStatus.completed) {
+              <button
+                class="tasks-item__button--complete"
+                mat-icon-button
+                color="primary"
+                (click)="completeTask(task)"
+              >
+                <mat-icon>check</mat-icon>
+              </button>
+            }
+
+            @if (status === TaskStatus.progress) {
+              <button
+                class="tasks-item__button--postponed"
+                mat-icon-button
+                color="accent"
+                (click)="postponeTask(task)"
+              >
+                <mat-icon>pause</mat-icon>
+              </button>
+            }
+
+            <button
+              class="tasks-item__button--remove"
+              mat-icon-button
+              color="warn"
+              (click)="deleteTask(task)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-list-item>
+    }
+  </mat-list>
+</ng-template>

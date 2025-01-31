@@ -1,43 +1,48 @@
-// @ts-check
-const eslint = require("@eslint/js");
-const tseslint = require("typescript-eslint");
-const angular = require("angular-eslint");
-
-module.exports = tseslint.config(
+module.exports = [
   {
-    files: ["**/*.ts"],
-    extends: [
-      eslint.configs.recommended,
-      ...tseslint.configs.recommended,
-      ...tseslint.configs.stylistic,
-      ...angular.configs.tsRecommended,
-    ],
-    processor: angular.processInlineTemplates,
+    files: ['src/**/*.ts', 'src/**/*.html'],
+    languageOptions: {
+      parser: require('@typescript-eslint/parser'),
+      parserOptions: {
+        project: 'tsconfig.json',
+        ecmaVersion: 2020,
+        extraFileExtensions: ['.html'],
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': require('@typescript-eslint/eslint-plugin'),
+      'simple-import-sort': require('eslint-plugin-simple-import-sort'),
+      'unused-imports': require('eslint-plugin-unused-imports'),
+    },
     rules: {
-      "@angular-eslint/directive-selector": [
-        "error",
+      'quotes': ['error', 'single'],
+      'simple-import-sort/imports': [
+        'error',
         {
-          type: "attribute",
-          prefix: "app",
-          style: "camelCase",
+          groups: [
+            ['^(@angular|rxjs|zone\\.js|core-js)(/.*|$)'],
+            ['^@?\\w'],
+            ['^src/'],
+            ['^\\.'],
+          ],
         },
       ],
-      "@angular-eslint/component-selector": [
-        "error",
-        {
-          type: "element",
-          prefix: "app",
-          style: "kebab-case",
-        },
-      ],
+      '@typescript-eslint/no-explicit-any': 'error',
+      'object-curly-spacing': ['error', 'always'],
+      'unused-imports/no-unused-imports': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-empty-function': 'warn',
     },
   },
   {
-    files: ["**/*.html"],
-    extends: [
-      ...angular.configs.templateRecommended,
-      ...angular.configs.templateAccessibility,
-    ],
-    rules: {},
-  }
-);
+    files: ['*.html'],
+    plugins: {
+      '@angular-eslint/template': require('@angular-eslint/eslint-plugin-template'),
+    },
+    rules: {
+      '@angular-eslint/template/no-any': 'error',
+    },
+  },
+];

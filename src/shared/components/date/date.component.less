@@ -1,0 +1,36 @@
+.date-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #e0e0e0;
+  font-family: 'Roboto', sans-serif;
+  margin-bottom: 24px;
+
+  &__day {
+    font-size: 48px;
+    font-weight: bold;
+    line-height: 1;
+  }
+
+  &__month-year {
+    display: flex;
+    flex-direction: column;
+    margin-left: 8px;
+
+    &__month {
+      font-size: 18px;
+      text-transform: uppercase;
+    }
+
+    &__year {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+  }
+
+  &__weekday {
+    margin-left: auto;
+    font-size: 16px;
+    opacity: 0.6;
+  }
+}

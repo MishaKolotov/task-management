@@ -1,4 +1,17 @@
-/* You can add global styles to this file, and also import other style files */
+@import './variables.less';
 
-html, body { height: 100%; }
+html, body { height: 100%;
+background-color: #3c3c4b}
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+@completed-color: #4caf50;
+@postponed-color: #ff9800;
+@remove-color: #e6645a;
+@background-color: #e0e0e0;
+
+:root {
+  --completed-color: @completed-color;
+  --postponed-color: @postponed-color;
+  --remove-color: @remove-color;
+  --background-color: @background-color;
+}

@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "format": "prettier --write \"src/**/*.{ts,html,less,scss,css,json}\"",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "lint:fix": "eslint \"src/**/*.{ts,html}\" --fix --no-ignore"
   },
   "husky": {
     "hooks": {
@@ -16,7 +17,7 @@
     }
   },
   "lint-staged": {
-    "src/**/*.{ts,html,less}": [
+    "src/**/*.{ts,less}": [
       "prettier --write",
       "eslint --fix"
     ]
@@ -39,11 +40,16 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.0.5",
+    "@angular-eslint/eslint-plugin-template": "^19.0.2",
     "@angular/cli": "^19.0.5",
     "@angular/compiler-cli": "^19.0.0",
     "@types/jasmine": "~5.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
     "angular-eslint": "19.0.2",
-    "eslint": "^9.16.0",
+    "eslint": "^9.19.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-unused-imports": "^4.1.4",
     "husky": "^9.1.7",
     "jasmine-core": "~5.4.0",
     "karma": "~6.4.0",

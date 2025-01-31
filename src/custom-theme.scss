@@ -1,23 +1,16 @@
-// Import Angular Material theming API
 @use '@angular/material' as mat;
+@use '../_theme-colors.scss' as my-theme;
 
-// Define your color palette
-$primary-palette: mat.define-palette(mat.$indigo-palette);
-$accent-palette: mat.define-palette(mat.$pink-palette, 500, 100, 700);
-$warn-palette: mat.define-palette(mat.$red-palette);
+html {
+  @include mat.theme((
+    color: (
+      theme-type: dark,
+      primary: my-theme.$primary-palette,
+      tertiary: my-theme.$tertiary-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
 
-// Define theme colors
-$custom-theme: mat.define-light-theme((
-  color: (
-    primary: $primary-palette,
-    accent: $accent-palette,
-    warn: $warn-palette,
-  ),
-  typography: mat.define-typography-config(),
-));
 
-// Include Angular Material global styles
-@include mat.core();
-
-// Apply custom theme
-@include mat.all-component-themes($custom-theme);
