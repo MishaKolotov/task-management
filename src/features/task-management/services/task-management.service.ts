@@ -25,6 +25,8 @@ export class TaskManagementService {
         ...tasksByStatus[TaskStatus.completed],
       ];
       this.allTasks.set(allTasks);
+
+      console.log(this.tasksByStatus())
     });
   }
 

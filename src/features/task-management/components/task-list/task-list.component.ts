@@ -168,9 +168,8 @@ export class TaskListComponent implements OnInit {
 
     if (event.previousContainer !== event.container) {
       event.previousContainer.data.splice(event.previousIndex, 1);
-      event.container.data.splice(event.currentIndex, 0, task);
+      event.container.data.splice(event.currentIndex, 0, { ...task, status: newStatus });
 
-      this.taskManagementService.moveTask(task.id, newStatus);
       this.taskManagementService.updateTaskOrder(
         newStatus,
         event.container.data
