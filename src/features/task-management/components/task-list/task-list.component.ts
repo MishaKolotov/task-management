@@ -1,7 +1,6 @@
 import {
   CdkDrag,
   CdkDragDrop,
-  CdkDragPlaceholder,
   CdkDropList,
   CdkDropListGroup,
   moveItemInArray,
@@ -37,7 +36,7 @@ import {
   ProgressSegment,
 } from '../../../../shared/components/progress-bar/progress-bar.component';
 import { uniqueValidator } from '../../../../shared/utils/validators/unique.validator';
-import { Task, TaskStatus } from '../../models/task.model';
+import { Task, TaskPanel, TaskStatus } from '../../models/task.model';
 import { TaskManagementService } from '../../services/task-management.service';
 
 @Component({
@@ -62,7 +61,6 @@ import { TaskManagementService } from '../../services/task-management.service';
     CdkDropList,
     CdkDrag,
     CdkDropListGroup,
-    CdkDragPlaceholder,
     MatButton,
   ],
   templateUrl: './task-list.component.html',
@@ -111,8 +109,27 @@ export class TaskListComponent implements OnInit {
       filterFn: (task) => task.status === TaskStatus.progress,
     },
   ];
-
   readonly TaskStatus = TaskStatus;
+  readonly taskPanels: TaskPanel[] = [
+    {
+      title: 'In Progress',
+      status: TaskStatus.progress,
+      tasks: this.progressTasks,
+      connectedToPanels: [TaskStatus.postponed, TaskStatus.completed],
+    },
+    {
+      title: 'Do it later',
+      status: TaskStatus.postponed,
+      tasks: this.postponedTasks,
+      connectedToPanels: [TaskStatus.progress, TaskStatus.completed],
+    },
+    {
+      title: 'Completed',
+      status: TaskStatus.completed,
+      tasks: this.completedTasks,
+      connectedToPanels: [TaskStatus.postponed, TaskStatus.progress],
+    }
+  ];
 
   constructor(private taskManagementService: TaskManagementService) {
     this.syncAllTasks();

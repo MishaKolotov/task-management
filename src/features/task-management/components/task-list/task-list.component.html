@@ -36,192 +36,72 @@
   <mat-accordion
     displayMode="flat"
     multi
-    [togglePosition]="'before'"
     cdkDropListGroup
+    [togglePosition]="'before'"
   >
-    <mat-expansion-panel
-      [expanded]="true"
-      #inProgressList
-      (mouseenter)="mouseEnterHandler($event, inProgressList)"
-    >
-      <mat-expansion-panel-header>
-        <mat-panel-title> In Progress </mat-panel-title>
-      </mat-expansion-panel-header>
-
-      <div
-        class="tasks-list"
-        cdkDropList
-        [cdkDropListData]="progressTasks()"
-        (cdkDropListDropped)="drop($event)"
-        [id]="TaskStatus.progress"
-        [cdkDropListConnectedTo]="[TaskStatus.postponed, TaskStatus.completed]"
+    @for (panel of taskPanels; track panel) {
+      <mat-expansion-panel
+        #panelRef
+        [expanded]="panel.status === TaskStatus.progress"
+        (mouseenter)="mouseEnterHandler($event, panelRef)"
       >
-        @if (!progressTasks().length) {
-          <div class="tasks-item">No items here.</div>
-        }
+        <mat-expansion-panel-header>
+          <mat-panel-title> {{ panel.title }} </mat-panel-title>
+        </mat-expansion-panel-header>
 
-        @for (task of progressTasks(); track task) {
-          <div class="tasks-item" cdkDrag [cdkDragData]="task">
-            <span>{{ task.title }} </span>
+        <div
+          class="tasks-list"
+          cdkDropList
+          [cdkDropListData]="panel.tasks()"
+          (cdkDropListDropped)="drop($event)"
+          [id]="panel.status"
+          [cdkDropListConnectedTo]="panel.connectedToPanels"
+        >
+          @if (!panel.tasks().length) {
+            <div class="tasks-item">No items here.</div>
+          }
 
-            <div>
-              @if (task.status !== TaskStatus.completed) {
+          @for (task of panel.tasks(); track task) {
+            <div class="tasks-item" cdkDrag [cdkDragData]="task">
+              <span>{{ task.title }} </span>
+
+              <div>
+                @if (task.status !== TaskStatus.completed) {
+                  <button
+                    class="tasks-item__button--complete"
+                    mat-icon-button
+                    color="primary"
+                    (click)="moveTask(task.id, TaskStatus.completed)"
+                  >
+                    <mat-icon>check</mat-icon>
+                  </button>
+                }
+
+                @if (task.status === TaskStatus.progress) {
+                  <button
+                    class="tasks-item__button--postponed"
+                    mat-icon-button
+                    color="accent"
+                    (click)="moveTask(task.id, TaskStatus.postponed)"
+                  >
+                    <mat-icon>pause</mat-icon>
+                  </button>
+                }
+
                 <button
-                  class="tasks-item__button--complete"
+                  class="tasks-item__button--remove"
                   mat-icon-button
-                  color="primary"
-                  (click)="moveTask(task.id, TaskStatus.completed)"
+                  color="warn"
+                  (click)="deleteTask(task.id)"
                 >
-                  <mat-icon>check</mat-icon>
+                  <mat-icon>delete</mat-icon>
                 </button>
-              }
-
-              @if (task.status === TaskStatus.progress) {
-                <button
-                  class="tasks-item__button--postponed"
-                  mat-icon-button
-                  color="accent"
-                  (click)="moveTask(task.id, TaskStatus.postponed)"
-                >
-                  <mat-icon>pause</mat-icon>
-                </button>
-              }
-
-              <button
-                class="tasks-item__button--remove"
-                mat-icon-button
-                color="warn"
-                (click)="deleteTask(task.id)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
+              </div>
             </div>
-          </div>
-        }
-      </div>
-    </mat-expansion-panel>
-
-    <mat-expansion-panel
-      #postponedList
-      (mouseenter)="mouseEnterHandler($event, postponedList)"
-    >
-      <mat-expansion-panel-header>
-        <mat-panel-title> Do it later </mat-panel-title>
-      </mat-expansion-panel-header>
-
-      <div
-        class="tasks-list"
-        cdkDropList
-        [cdkDropListData]="postponedTasks()"
-        (cdkDropListDropped)="drop($event)"
-        [id]="TaskStatus.postponed"
-        [cdkDropListConnectedTo]="[TaskStatus.progress, TaskStatus.completed]"
-      >
-        @if (!postponedTasks().length) {
-          <div class="tasks-item">No items here.</div>
-        }
-
-        @for (task of postponedTasks(); track task) {
-          <div class="tasks-item" cdkDrag>
-            <span>{{ task.title }} </span>
-
-            <div>
-              @if (task.status !== TaskStatus.completed) {
-                <button
-                  class="tasks-item__button--complete"
-                  mat-icon-button
-                  color="primary"
-                  (click)="moveTask(task.id, TaskStatus.completed)"
-                >
-                  <mat-icon>check</mat-icon>
-                </button>
-              }
-
-              @if (task.status === TaskStatus.progress) {
-                <button
-                  class="tasks-item__button--postponed"
-                  mat-icon-button
-                  color="accent"
-                  (click)="moveTask(task.id, TaskStatus.postponed)"
-                >
-                  <mat-icon>pause</mat-icon>
-                </button>
-              }
-
-              <button
-                class="tasks-item__button--remove"
-                mat-icon-button
-                color="warn"
-                (click)="deleteTask(task.id)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
-          </div>
-        }
-      </div>
-    </mat-expansion-panel>
-
-    <mat-expansion-panel
-      #completedList
-      (mouseenter)="mouseEnterHandler($event, completedList)"
-    >
-      <mat-expansion-panel-header>
-        <mat-panel-title> Completed </mat-panel-title>
-      </mat-expansion-panel-header>
-
-      <div
-        class="tasks-list"
-        cdkDropList
-        [cdkDropListData]="completedTasks()"
-        [id]="TaskStatus.completed"
-        (cdkDropListDropped)="drop($event)"
-        [cdkDropListConnectedTo]="[TaskStatus.progress, TaskStatus.postponed]"
-      >
-        @if (!completedTasks().length) {
-          <div class="tasks-item">No items here.</div>
-        }
-
-        @for (task of completedTasks(); track task) {
-          <div class="tasks-item" cdkDrag [cdkDragData]="task">
-            <span>{{ task.title }} </span>
-
-            <div>
-              @if (task.status !== TaskStatus.completed) {
-                <button
-                  class="tasks-item__button--complete"
-                  mat-icon-button
-                  color="primary"
-                  (click)="moveTask(task.id, TaskStatus.completed)"
-                >
-                  <mat-icon>check</mat-icon>
-                </button>
-              }
-
-              @if (task.status === TaskStatus.progress) {
-                <button
-                  class="tasks-item__button--postponed"
-                  mat-icon-button
-                  color="accent"
-                  (click)="moveTask(task.id, TaskStatus.postponed)"
-                >
-                  <mat-icon>pause</mat-icon>
-                </button>
-              }
-
-              <button
-                class="tasks-item__button--remove"
-                mat-icon-button
-                color="warn"
-                (click)="deleteTask(task.id)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
-          </div>
-        }
-      </div>
-    </mat-expansion-panel>
+          }
+        </div>
+      </mat-expansion-panel>
+    }
   </mat-accordion>
 
   <button mat-button color="primary" (click)="resetAllItems()">
