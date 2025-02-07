@@ -1,118 +1,230 @@
-<section class="tasks-container">
-  <div class="tasks-block">
-    <app-date></app-date>
+<section class="tasks-block">
+  <app-date></app-date>
 
-    <app-progress-bar [items]="tasks" [segments]="taskProgressSegments">
-    </app-progress-bar>
+  <app-progress-bar [items]="allTasks()" [segments]="taskProgressSegments">
+  </app-progress-bar>
 
-    <div class="tasks-field-section">
-      <mat-form-field appearance="fill" class="task-input">
-        <mat-label>Filter tasks</mat-label>
-        <input matInput [(ngModel)]="filterText" (input)="applyFilter()" />
-      </mat-form-field>
-    </div>
-
-    <div class="tasks-field-section">
-      <mat-form-field appearance="fill" class="task-input">
-        <mat-label>Add new item</mat-label>
-        <input matInput [(ngModel)]="newTaskTitle" />
-        <button matSuffix mat-icon-button color="primary" (click)="addTask()">
-          <mat-icon>add</mat-icon>
-        </button>
-      </mat-form-field>
-    </div>
-
-    <mat-accordion [togglePosition]="'before'">
-      <mat-expansion-panel #progressPanel [expanded]="true">
-        <mat-expansion-panel-header>
-          <mat-panel-title>In Progress</mat-panel-title>
-        </mat-expansion-panel-header>
-        <mat-list>
-          <ng-container
-            *ngTemplateOutlet="
-              taskList;
-              context: { tasks: progressTasks, status: TaskStatus.progress }
-            "
-          ></ng-container>
-        </mat-list>
-      </mat-expansion-panel>
-
-      <mat-expansion-panel>
-        <mat-expansion-panel-header>
-          <mat-panel-title>Do Later</mat-panel-title>
-        </mat-expansion-panel-header>
-        <ng-container
-          *ngTemplateOutlet="
-            taskList;
-            context: { tasks: postponedTasks, status: TaskStatus.postponed }
-          "
-        ></ng-container>
-      </mat-expansion-panel>
-
-      <mat-expansion-panel>
-        <mat-expansion-panel-header>
-          <mat-panel-title>Completed</mat-panel-title>
-        </mat-expansion-panel-header>
-        <ng-container
-          *ngTemplateOutlet="
-            taskList;
-            context: { tasks: completedTasks, status: TaskStatus.completed }
-          "
-        ></ng-container>
-      </mat-expansion-panel>
-    </mat-accordion>
+  <div class="tasks-field-section">
+    <mat-form-field appearance="fill" class="task-input">
+      <mat-label>Filter tasks</mat-label>
+      <input matInput [value]="filterText()" (input)="onFilterChange($event)" />
+    </mat-form-field>
   </div>
-</section>
 
-<ng-template #taskList let-tasks="tasks" let-status="status">
-  <mat-list>
-    @if(!tasks.length) {
-      <mat-list-item>
-        <div matListItemLine class="tasks-item">
-          No Items
-        </div>
-      </mat-list-item>
-    }
+  <div class="tasks-field-section">
+    <mat-form-field appearance="fill" type="submit" class="task-input">
+      <mat-label>Add new item</mat-label>
+      <input matInput [formControl]="addControl" (keydown.enter)="addTask()" />
+      <button
+        matSuffix
+        mat-icon-button
+        color="primary"
+        type="submit"
+        (click)="addTask()"
+      >
+        <mat-icon>add</mat-icon>
+      </button>
 
-    @for (task of tasks; track $index) {
-      <mat-list-item>
-        <div matListItemLine class="tasks-item">
-          <span>{{ task.title }} </span>
+      <mat-error>
+        @if (addControl.errors?.['isDuplicated']) {
+          Task already exists.
+        }
+      </mat-error>
+    </mat-form-field>
+  </div>
 
-          <div>
-            @if (status !== TaskStatus.completed) {
+  <mat-accordion
+    displayMode="flat"
+    multi
+    [togglePosition]="'before'"
+    cdkDropListGroup
+  >
+    <mat-expansion-panel
+      [expanded]="true"
+      #inProgressList
+      (mouseenter)="mouseEnterHandler($event, inProgressList)"
+    >
+      <mat-expansion-panel-header>
+        <mat-panel-title> In Progress </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div
+        class="tasks-list"
+        cdkDropList
+        [cdkDropListData]="progressTasks()"
+        (cdkDropListDropped)="drop($event)"
+        [id]="TaskStatus.progress"
+        [cdkDropListConnectedTo]="[TaskStatus.postponed, TaskStatus.completed]"
+      >
+        @if (!progressTasks().length) {
+          <div class="tasks-item">No items here.</div>
+        }
+
+        @for (task of progressTasks(); track task) {
+          <div class="tasks-item" cdkDrag [cdkDragData]="task">
+            <span>{{ task.title }} </span>
+
+            <div>
+              @if (task.status !== TaskStatus.completed) {
+                <button
+                  class="tasks-item__button--complete"
+                  mat-icon-button
+                  color="primary"
+                  (click)="moveTask(task.id, TaskStatus.completed)"
+                >
+                  <mat-icon>check</mat-icon>
+                </button>
+              }
+
+              @if (task.status === TaskStatus.progress) {
+                <button
+                  class="tasks-item__button--postponed"
+                  mat-icon-button
+                  color="accent"
+                  (click)="moveTask(task.id, TaskStatus.postponed)"
+                >
+                  <mat-icon>pause</mat-icon>
+                </button>
+              }
+
               <button
-                class="tasks-item__button--complete"
+                class="tasks-item__button--remove"
                 mat-icon-button
-                color="primary"
-                (click)="completeTask(task)"
+                color="warn"
+                (click)="deleteTask(task.id)"
               >
-                <mat-icon>check</mat-icon>
+                <mat-icon>delete</mat-icon>
               </button>
-            }
-
-            @if (status === TaskStatus.progress) {
-              <button
-                class="tasks-item__button--postponed"
-                mat-icon-button
-                color="accent"
-                (click)="postponeTask(task)"
-              >
-                <mat-icon>pause</mat-icon>
-              </button>
-            }
-
-            <button
-              class="tasks-item__button--remove"
-              mat-icon-button
-              color="warn"
-              (click)="deleteTask(task)"
-            >
-              <mat-icon>delete</mat-icon>
-            </button>
+            </div>
           </div>
-        </div>
-      </mat-list-item>
-    }
-  </mat-list>
-</ng-template>
+        }
+      </div>
+    </mat-expansion-panel>
+
+    <mat-expansion-panel
+      #postponedList
+      (mouseenter)="mouseEnterHandler($event, postponedList)"
+    >
+      <mat-expansion-panel-header>
+        <mat-panel-title> Do it later </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div
+        class="tasks-list"
+        cdkDropList
+        [cdkDropListData]="postponedTasks()"
+        (cdkDropListDropped)="drop($event)"
+        [id]="TaskStatus.postponed"
+        [cdkDropListConnectedTo]="[TaskStatus.progress, TaskStatus.completed]"
+      >
+        @if (!postponedTasks().length) {
+          <div class="tasks-item">No items here.</div>
+        }
+
+        @for (task of postponedTasks(); track task) {
+          <div class="tasks-item" cdkDrag>
+            <span>{{ task.title }} </span>
+
+            <div>
+              @if (task.status !== TaskStatus.completed) {
+                <button
+                  class="tasks-item__button--complete"
+                  mat-icon-button
+                  color="primary"
+                  (click)="moveTask(task.id, TaskStatus.completed)"
+                >
+                  <mat-icon>check</mat-icon>
+                </button>
+              }
+
+              @if (task.status === TaskStatus.progress) {
+                <button
+                  class="tasks-item__button--postponed"
+                  mat-icon-button
+                  color="accent"
+                  (click)="moveTask(task.id, TaskStatus.postponed)"
+                >
+                  <mat-icon>pause</mat-icon>
+                </button>
+              }
+
+              <button
+                class="tasks-item__button--remove"
+                mat-icon-button
+                color="warn"
+                (click)="deleteTask(task.id)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </mat-expansion-panel>
+
+    <mat-expansion-panel
+      #completedList
+      (mouseenter)="mouseEnterHandler($event, completedList)"
+    >
+      <mat-expansion-panel-header>
+        <mat-panel-title> Completed </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div
+        class="tasks-list"
+        cdkDropList
+        [cdkDropListData]="completedTasks()"
+        [id]="TaskStatus.completed"
+        (cdkDropListDropped)="drop($event)"
+        [cdkDropListConnectedTo]="[TaskStatus.progress, TaskStatus.postponed]"
+      >
+        @if (!completedTasks().length) {
+          <div class="tasks-item">No items here.</div>
+        }
+
+        @for (task of completedTasks(); track task) {
+          <div class="tasks-item" cdkDrag [cdkDragData]="task">
+            <span>{{ task.title }} </span>
+
+            <div>
+              @if (task.status !== TaskStatus.completed) {
+                <button
+                  class="tasks-item__button--complete"
+                  mat-icon-button
+                  color="primary"
+                  (click)="moveTask(task.id, TaskStatus.completed)"
+                >
+                  <mat-icon>check</mat-icon>
+                </button>
+              }
+
+              @if (task.status === TaskStatus.progress) {
+                <button
+                  class="tasks-item__button--postponed"
+                  mat-icon-button
+                  color="accent"
+                  (click)="moveTask(task.id, TaskStatus.postponed)"
+                >
+                  <mat-icon>pause</mat-icon>
+                </button>
+              }
+
+              <button
+                class="tasks-item__button--remove"
+                mat-icon-button
+                color="warn"
+                (click)="deleteTask(task.id)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+
+  <button mat-button color="primary" (click)="resetAllItems()">
+    Reset All Items
+  </button>
+</section>

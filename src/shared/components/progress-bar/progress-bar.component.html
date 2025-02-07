@@ -1,9 +1,7 @@
-<div class="progress-bar">
-  @for (segment of progressSegments; track $index) {
-    <div
-      class="progress-bar__segment"
-      [style.background-color]="segment.color"
-      [style.width.%]="segment.percentage">
-    </div>
-  }
-</div>
+@for (segment of progressSegments; track $index) {
+  <div
+    class="segment"
+    [style.background-color]="segment.color"
+    [style.width.%]="segment.percentage"
+  ></div>
+}

@@ -1,12 +1,21 @@
-import { NgTemplateOutlet } from '@angular/common';
+import {
+  CdkDrag,
+  CdkDragDrop,
+  CdkDragPlaceholder,
+  CdkDropList,
+  CdkDropListGroup,
+  moveItemInArray,
+} from '@angular/cdk/drag-drop';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
+  effect,
   OnInit,
-  ViewChild,
+  signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { MatIconButton } from '@angular/material/button';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import {
   MatAccordion,
   MatExpansionPanel,
@@ -14,19 +23,20 @@ import {
   MatExpansionPanelTitle,
 } from '@angular/material/expansion';
 import {
+  MatError,
   MatFormField,
   MatLabel,
   MatSuffix,
 } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
-import { MatList, MatListItem } from '@angular/material/list';
 
 import { DateComponent } from '../../../../shared/components/date/date.component';
 import {
   ProgressBarComponent,
   ProgressSegment,
 } from '../../../../shared/components/progress-bar/progress-bar.component';
+import { uniqueValidator } from '../../../../shared/utils/validators/unique.validator';
 import { Task, TaskStatus } from '../../models/task.model';
 import { TaskManagementService } from '../../services/task-management.service';
 
@@ -36,20 +46,24 @@ import { TaskManagementService } from '../../services/task-management.service';
   imports: [
     MatAccordion,
     MatExpansionPanel,
-    MatList,
     MatExpansionPanelHeader,
-    MatListItem,
     MatFormField,
     MatLabel,
     MatExpansionPanelTitle,
     MatIcon,
     MatInput,
     MatIconButton,
+    MatError,
     FormsModule,
-    NgTemplateOutlet,
     MatSuffix,
     ProgressBarComponent,
     DateComponent,
+    ReactiveFormsModule,
+    CdkDropList,
+    CdkDrag,
+    CdkDropListGroup,
+    CdkDragPlaceholder,
+    MatButton,
   ],
   templateUrl: './task-list.component.html',
   styleUrls: ['./task-list.component.less'],
@@ -57,11 +71,30 @@ import { TaskManagementService } from '../../services/task-management.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TaskListComponent implements OnInit {
-  tasks: Task[] = [];
-  filteredTasks: Task[] = [];
-  newTaskTitle = '';
-  filterText = '';
-  taskProgressSegments: ProgressSegment<Task>[] = [
+  readonly allTasks = signal<Task[]>([]);
+  readonly filterText = signal('');
+  readonly progressTasks = computed(() =>
+    this.taskManagementService.getTasksByStatus(
+      TaskStatus.progress,
+      this.filterText()
+    )
+  );
+  readonly postponedTasks = computed(() =>
+    this.taskManagementService.getTasksByStatus(
+      TaskStatus.postponed,
+      this.filterText()
+    )
+  );
+  readonly completedTasks = computed(() =>
+    this.taskManagementService.getTasksByStatus(
+      TaskStatus.completed,
+      this.filterText()
+    )
+  );
+  readonly addControl = new FormControl('', {
+    validators: [uniqueValidator(this.allTasks)],
+  });
+  readonly taskProgressSegments: ProgressSegment<Task>[] = [
     {
       label: 'Completed',
       color: 'var(--completed-color)',
@@ -81,79 +114,91 @@ export class TaskListComponent implements OnInit {
 
   readonly TaskStatus = TaskStatus;
 
-  @ViewChild('progressPanel') progressPanel!: MatExpansionPanel;
-
-  constructor(private taskManagementService: TaskManagementService) {}
+  constructor(private taskManagementService: TaskManagementService) {
+    this.syncAllTasks();
+  }
 
   ngOnInit(): void {
-    this.loadTasks();
-  }
-
-  get progressTasks(): Task[] {
-    return this.filteredTasks.filter(
-      (task) => task.status === TaskStatus.progress
-    );
-  }
-
-  get postponedTasks(): Task[] {
-    return this.filteredTasks.filter(
-      (task) => task.status === TaskStatus.postponed
-    );
-  }
-
-  get completedTasks(): Task[] {
-    return this.filteredTasks.filter(
-      (task) => task.status === TaskStatus.completed
-    );
-  }
-
-  private loadTasks(): void {
     this.taskManagementService.loadTasks();
-    this.tasks = this.taskManagementService.getTasks();
-    this.filteredTasks = [...this.tasks];
+  }
+
+  onFilterChange(event: Event): void {
+    const inputElement = event.target as HTMLInputElement;
+
+    this.filterText.set(inputElement.value);
   }
 
   addTask(): void {
-    if (this.newTaskTitle.trim()) {
-      this.taskManagementService.addTask(this.newTaskTitle.trim());
-      this.newTaskTitle = '';
-      this.refreshTasks();
-      this.openProgressAccordion();
-    }
-  }
+    if (!this.addControl.valid) {
+      this.addControl.markAsTouched();
 
-  applyFilter(): void {
-    const search = this.filterText.toLowerCase().trim();
-    this.filteredTasks = this.tasks.filter((task) =>
-      task.title.toLowerCase().includes(search)
-    );
-  }
-
-  completeTask(task: Task): void {
-    this.taskManagementService.updateTask(task.id, TaskStatus.completed);
-    this.refreshTasks();
-  }
-
-  postponeTask(task: Task): void {
-    this.taskManagementService.updateTask(task.id, TaskStatus.postponed);
-    this.refreshTasks();
-  }
-
-  deleteTask(task: Task): void {
-    this.taskManagementService.deleteTask(task.id);
-    this.refreshTasks();
-  }
-
-  private refreshTasks(): void {
-    this.tasks = [...this.taskManagementService.getTasks()];
-    this.applyFilter();
-  }
-
-  private openProgressAccordion(): void {
-    if (this.progressPanel.expanded) {
       return;
     }
 
-    this.progressPanel.open();
+    const title = this.addControl.value?.trim();
+
+    if (title) {
+      this.taskManagementService.addTask(title);
+
+      this.addControl.reset();
+    }
+  }
+
+  deleteTask(taskId: number): void {
+    this.taskManagementService.deleteTask(taskId);
+  }
+
+  moveTask(taskId: number, newStatus: TaskStatus): void {
+    this.taskManagementService.moveTask(taskId, newStatus);
+  }
+
+  mouseEnterHandler(
+    event: MouseEvent,
+    chapterExpansionPanel: MatExpansionPanel
+  ): void {
+    if (event.buttons && !chapterExpansionPanel.expanded) {
+      chapterExpansionPanel.open();
+    }
+  }
+
+  drop(event: CdkDragDrop<Task[]>): void {
+    const task = event.previousContainer.data[event.previousIndex];
+    const newStatus = event.container.id as TaskStatus;
+    const previousStatus = event.previousContainer.id as TaskStatus;
+
+    if (event.previousContainer !== event.container) {
+      event.previousContainer.data.splice(event.previousIndex, 1);
+      event.container.data.splice(event.currentIndex, 0, task);
+
+      this.taskManagementService.moveTask(task.id, newStatus);
+      this.taskManagementService.updateTaskOrder(
+        newStatus,
+        event.container.data
+      );
+      this.taskManagementService.updateTaskOrder(
+        previousStatus,
+        event.previousContainer.data
+      );
+
+      return;
+    }
+
+    moveItemInArray(
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+
+    this.taskManagementService.updateTaskOrder(newStatus, event.container.data);
+  }
+
+  resetAllItems(): void {
+    this.taskManagementService.resetAllItems();
+  }
+
+  private syncAllTasks(): void {
+    effect(() => {
+      this.allTasks.set(this.taskManagementService.allTasks());
+    });
   }
 }

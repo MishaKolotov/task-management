@@ -1,25 +1,47 @@
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 100%;
+
+  app-date, mat-accordion {
+    width: 100%;
+  }
+
+  mat-accordion {
+    margin-bottom: 24px;
+  }
+
+  .cdk-drag {
+    cursor: move;
+  }
+
+  .cdk-drag-placeholder {
+    opacity: 0.5;
+  }
+}
+
 .tasks {
   &-field-section {
+    width: 100%;
+
     .task-input {
       width: 100%;
     }
   }
 
-  &-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    width: 100%;
-    height: 100%;
-  }
-
   &-block {
     width: 500px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   &-item {
-    padding: 0;
+    padding: 12px;
 
     display: flex;
     justify-content: space-between;

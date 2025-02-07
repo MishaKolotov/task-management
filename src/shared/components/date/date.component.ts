@@ -10,5 +10,5 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DateComponent {
-  currentDate = new Date();
+  readonly currentDate = new Date();
 }
